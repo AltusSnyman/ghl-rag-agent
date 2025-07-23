@@ -1,0 +1,499 @@
+{
+  "name": "ghl-rag-agent",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://help.gohighlevel.com/support/sitemap.xml",
+        "options": {}
+      },
+      "id": "39f7a244-71ad-4c41-a430-9e36cb822b7a",
+      "name": "Get All n8n Documentation Links",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        640,
+        128
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {},
+      "id": "e9f58b08-a42b-4028-800f-2294ea762219",
+      "name": "Start Indexing",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        400,
+        128
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "links",
+              "cssSelector": "loc",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d5abe712-6604-418e-b46b-01fd4e4794ab",
+      "name": "Extract Links from HTML",
+      "type": "n8n-nodes-base.html",
+      "position": [
+        928,
+        128
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "links",
+        "options": {
+          "destinationFieldName": "link"
+        }
+      },
+      "id": "d918d063-58f1-48c0-b8ba-7030ee4b342a",
+      "name": "Split Out Links",
+      "type": "n8n-nodes-base.splitOut",
+      "position": [
+        1184,
+        128
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "link",
+        "options": {}
+      },
+      "id": "a8caf0e5-ae0c-4098-a1b6-3f72e565f338",
+      "name": "Remove Duplicate Links",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "position": [
+        1408,
+        128
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $workflow.id }}"
+        },
+        "workflowInputs": {
+          "value": {
+            "path": "={{ $json.link }}"
+          },
+          "schema": [
+            {
+              "id": "path",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "path",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "data"
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "ea19ff9e-ac56-4af1-8dbc-9fff44ce66b6",
+      "name": "Add Documentation Page to Vector Store",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "position": [
+        1984,
+        160
+      ],
+      "typeVersion": 1.2,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      },
+      "id": "16e2990d-e526-4315-9f92-3267b3656b1c",
+      "name": "Loop Over Documentation Pages",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        1760,
+        128
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.documentation }}",
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "id": "b1a6f5c3-f186-4a8a-ac63-1bd0624ff4ca",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "position": [
+        2272,
+        912
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "chunkSize": 1500,
+        "chunkOverlap": 200,
+        "options": {
+          "splitCode": "markdown"
+        }
+      },
+      "id": "64c47386-bee0-4834-adfc-c5bdc774acdf",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "position": [
+        2080,
+        1072
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "removeItemsSeenInPreviousExecutions",
+        "dedupeValue": "={{ $json.documentation }}",
+        "options": {
+          "scope": "node",
+          "historySize": 10000
+        }
+      },
+      "id": "984e5bdd-81e3-43bd-abce-7cdb9df9ed7b",
+      "name": "Remove Duplicate Documentation Content",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "position": [
+        1600,
+        592
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5ed964a6-5200-454c-b983-f3dc7c8c7a48",
+              "name": "documentation",
+              "type": "string",
+              "value": "={{ $json.data.replace(/([^#\\n]+)\\s*#/g, '# $1').trim().replace(/^\\s*https?:\\/\\/\\S+\\s*/, '') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8e0f4642-663f-4399-9aa1-8ef53570ade5",
+      "name": "Clean Documentation",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1360,
+        592
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "documents",
+          "cachedResultName": "documents"
+        },
+        "embeddingBatchSize": 30,
+        "options": {}
+      },
+      "id": "1748b0f8-8d75-4e11-b6dc-44d46b0224b6",
+      "name": "Your Supabase Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "position": [
+        2064,
+        592
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "supabaseApi": {
+          "id": "EMuC7OCeA7wHzr1Z",
+          "name": "Superbase Supwennz"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1952,
+        912
+      ],
+      "id": "d4cf4ed4-b4d9-4b1b-84a7-927d1acba6b2",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "IEXkm4UPS89kDFfk",
+          "name": "new 22/4/25"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.path }}",
+        "options": {}
+      },
+      "id": "95148f54-964c-4e45-b372-87f15d250e2f",
+      "name": "Get Documentation Page1",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        752,
+        560
+      ],
+      "typeVersion": 4.2,
+      "alwaysOutputData": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "data",
+              "cssSelector": "body",
+              "skipSelectors": "script, style, footer, nav, form"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b88eb2e9-981e-4d09-ba87-754ba0bec0d7",
+      "name": "Extract Documentation Content1",
+      "type": "n8n-nodes-base.html",
+      "position": [
+        1088,
+        592
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "path",
+              "type": "any"
+            }
+          ]
+        }
+      },
+      "id": "ef41d02d-bb3b-4074-8d88-d1a5075f1d54",
+      "name": "Ingest Web Page",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        464,
+        560
+      ],
+      "typeVersion": 1.1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start Indexing": {
+      "main": [
+        [
+          {
+            "node": "Get All n8n Documentation Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Links from HTML": {
+      "main": [
+        [
+          {
+            "node": "Split Out Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All n8n Documentation Links": {
+      "main": [
+        [
+          {
+            "node": "Extract Links from HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicate Links": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Documentation Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out Links": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicate Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Documentation Page to Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Documentation Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Documentation Pages": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Add Documentation Page to Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Your Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicate Documentation Content": {
+      "main": [
+        [
+          {
+            "node": "Your Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Documentation": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicate Documentation Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Your Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Documentation Page1": {
+      "main": [
+        [
+          {
+            "node": "Extract Documentation Content1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ingest Web Page": {
+      "main": [
+        [
+          {
+            "node": "Get Documentation Page1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Documentation Content1": {
+      "main": [
+        [
+          {
+            "node": "Clean Documentation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "383aaa5d-af24-4681-b1b7-75260fbe7571",
+  "meta": {
+    "instanceId": "f2cfe575878e5c47f7e72379a85e4d1bd06e596ca217c654e8adbaf41b5240fb"
+  },
+  "id": "g4l6lfCGIg6OVgEP",
+  "tags": []
+}
