@@ -1,0 +1,84 @@
+ <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+
+<style type="text/css">
+/* Custom CSS for n8n Chat Widget (All Blue Theme) */
+
+/* General Chat Colors */
+:root {
+    --chat--color-primary: #007bff;
+    --chat--color-primary-shade-50: #0069d9;
+    --chat--color-primary-shade-100: #0056b3;
+    --chat--color-secondary: #17a2b8;
+    --chat--color-secondary-shade-50: #138496;
+    --chat--color-white: #ffffff;
+    --chat--color-light: #e0f2f7;
+    --chat--color-light-shade-50: #cce9f2;
+    --chat--color-light-shade-100: #99d6e5;
+    --chat--color-medium: #6c757d;
+    --chat--color-dark: #003366;
+    --chat--color-disabled: #6a88b5;
+    --chat--color-typing: #004d99;
+
+    --chat--header--background: var(--chat--color-dark);
+    --chat--header--color: var(--chat--color-white);
+    --chat--header--border-bottom: 1px solid var(--chat--color-primary-shade-100);
+
+    --chat--message--bot--background: var(--chat--color-light);
+    --chat--message--bot--color: var(--chat--color-dark);
+    --chat--message--user--background: var(--chat--color-primary);
+    --chat--message--user--color: var(--chat--color-white);
+
+    --chat--toggle--background: var(--chat--color-primary);
+    --chat--toggle--hover--background: var(--chat--color-primary-shade-50);
+    --chat--toggle--active--background: var(--chat--color-primary-shade-100);
+    --chat--toggle--color: var(--chat--color-white);
+
+    --chat--input--background: var(--chat--color-light-shade-50);
+    --chat--input--color: var(--chat--color-dark);
+    --chat--input--placeholder-color: var(--chat--color-medium);
+}
+
+/* **** UPDATED POSITIONING TO TARGET THE OUTER #n8n-chat DIV **** */
+#n8n-chat { /* Targeting the main container ID */
+    position: fixed !important; 
+    top: 20px !important;       /* 20px from the top */
+    left: 20px !important;      /* 20px from the left */
+    bottom: auto !important;    /* FORCE overriding any 'bottom' rule */
+    right: auto !important;     /* FORCE overriding any 'right' rule */
+    z-index: 99999 !important;  /* Ensure it's always on top */
+    /* cursor: pointer; - This is for the button itself, not the container */
+}
+
+/* We don't need to change .n8n-chat-button or .chat-window-toggle for position */
+/* The Z-index for the wrapper below should still be high */
+.n8n-chat-window-wrapper {
+    z-index: 99998 !important; /* Ensure chat window opens on top */
+}
+
+/* If the cursor for the toggle button itself is an issue, we can reset it here */
+.chat-window-toggle {
+    cursor: pointer !important; /* Ensure it's a pointer when hovered */
+}
+</style>
+
+<script type="module">
+    import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+
+    createChat({
+        webhookUrl: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX YOUR URL HERE XXXXXXXXXXXXXXXXXXXXXX', 
+        mode: 'window', 
+        showWelcomeScreen: true,
+        initialMessages: [
+            "Hi there! 👋",
+            "Hi, I am Altus, your Ai Go Highlevel Support"
+        ],
+        i18n: {
+            en: {
+                title: "Go Highlevel Support",
+                subtitle: "Help brought to you by Altus.",
+                getStarted: "Start AI Chat",
+                inputPlaceholder: "Type your question...",
+            },
+        },
+    });
+</script>
