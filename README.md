@@ -6,7 +6,7 @@ This guide will walk you through setting up a **custom chatbot** trained on [Go 
 
 📽️ **How-To Instructional Video**  
 Watch the full setup tutorial here:  
-➡️ *[Placeholder for video link]*
+➡️ https://www.loom.com/share/83bc1dcf1a69441c902b32004072aa0f
 
 ---
 
